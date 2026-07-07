@@ -30,6 +30,18 @@ def confirmed_member_user_ids(*, expedition):
     ).values_list('user_id', flat=True)
 
 
+def event_recipient_user_ids(*, expedition):
+    """User ids that should receive real-time events for an expedition.
+
+    Recipients are the expedition chief plus every user with an
+    ExpeditionMember row, regardless of invitation state.
+    """
+    member_ids = ExpeditionMember.objects.filter(
+        expedition_id=expedition.id,
+    ).values_list('user_id', flat=True)
+    return {expedition.chief_id, *member_ids}
+
+
 def user_ids_in_other_active_expedition(*, expedition, user_ids):
     return set(
         ExpeditionMember.objects.filter(

@@ -1,7 +1,7 @@
 from django.db import transaction
 from django.utils import timezone
 
-from expeditions import selectors
+from expeditions import events, selectors
 from expeditions.exceptions import (
     ExpeditionStartError,
     InvalidTransitionError,
@@ -17,10 +17,6 @@ from expeditions.models import (
 from users.models import UserRole
 
 MIN_CONFIRMED_MEMBERS = 2
-
-
-def _dispatch_member_invited(*, member):
-    pass
 
 
 def create_expedition(
@@ -93,7 +89,9 @@ def invite_member(*, expedition, chief, member):
         state=ExpeditionMemberState.INVITED,
     )
 
-    _dispatch_member_invited(member=expedition_member)
+    events.dispatch_member_invited(
+        expedition=expedition, member_id=expedition_member.user_id
+    )
 
     return expedition_member
 
@@ -128,6 +126,10 @@ def confirm_invitation(*, expedition, member):
     expedition_member.confirmed_at = timezone.now()
     expedition_member.save(update_fields=('state', 'confirmed_at'))
 
+    events.dispatch_member_confirmed(
+        expedition=expedition, member_id=expedition_member.user_id
+    )
+
     return expedition_member
 
 
@@ -149,6 +151,8 @@ def set_ready(*, expedition, chief):
 
     expedition.status = ExpeditionStatus.READY
     expedition.save(update_fields=('status',))
+
+    events.dispatch_expedition_status(expedition=expedition)
 
     return expedition
 
@@ -202,6 +206,8 @@ def start_expedition(*, expedition, chief, now=None):
     expedition.status = ExpeditionStatus.ACTIVE
     expedition.save(update_fields=('status',))
 
+    events.dispatch_expedition_status(expedition=expedition)
+
     return expedition
 
 
@@ -237,5 +243,7 @@ def finish_expedition(*, expedition, chief, now=None):
         update_fields.append('end_at')
 
     expedition.save(update_fields=update_fields)
+
+    events.dispatch_expedition_status(expedition=expedition)
 
     return expedition
