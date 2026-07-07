@@ -1,0 +1,37 @@
+[project]
+name = "expeditions-admin"
+version = "0.1.0"
+description = "Backend API for expedition management."
+requires-python = ">=3.14"
+dependencies = [
+    "Django==6.0.6",
+    "djangorestframework==3.17.1",
+    "djangorestframework-simplejwt==5.5.1",
+    "drf-spectacular==0.30.0",
+    "channels==4.3.2",
+    "psycopg[binary]==3.3.4",
+    "django-environ==0.14.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==9.1.1",
+    "pytest-django==4.12.0",
+    "ruff==0.15.20",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+extend-exclude = [".venv", "migrations"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "DJ"]
+
+[tool.ruff.lint.per-file-ignores]
+"config/settings.py" = ["E501"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py", "tests.py", "*_test.py"]
+addopts = "-ra"
